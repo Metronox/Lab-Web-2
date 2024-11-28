@@ -1,5 +1,5 @@
 const produtoHandler = require('./produto-handler');
-const produtoSchema = require('./produto-schema');
+const { produtoSchema, produtoSchemaAtualizacao } = require('./produto-schema');
 
 module.exports = [
   {
@@ -18,7 +18,7 @@ module.exports = [
     handler: produtoHandler.atualizarProduto,
     options: {
       validate: {
-        payload: produtoSchema,
+        payload: produtoSchemaAtualizacao,
       },
     },
   },
