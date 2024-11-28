@@ -1,55 +1,81 @@
-const produtos = [];
+const { Produto } = require('./produto-model');
 
-const criarProduto = (request, h) => {
-  const produto = request.payload;
-  produtos.push(produto);
-  return h.response({ mensagem: 'Produto criado com sucesso', produto }).code(201);
+const criarProduto = async (request, h) => {
+    try {
+        const produto = await Produto.create(request.payload);
+        return h.response(produto).code(201);
+    } catch (error) {
+        return h.response({ erro: 'Erro ao criar produto', detalhes: error.message }).code(500);
+    }
 };
 
-const atualizarProduto = (request, h) => {
-  const { id } = request.params;
-  const dadosAtualizados = request.payload;
-  const index = produtos.findIndex((p) => p.id === id);
+const atualizarProduto = async (request, h) => {
+    const { id } = request.params;
 
-  if (index === -1) {
-    return h.response({ erro: 'Produto não encontrado' }).code(404);
-  }
+    try {
+        const [rowsAtualizadas] = await Produto.update(request.payload, {
+            where: { id },
+        });
 
-  produtos[index] = { ...produtos[index], ...dadosAtualizados };
-  return { mensagem: 'Produto atualizado com sucesso', produto: produtos[index] };
+        if (rowsAtualizadas === 0) {
+            return h.response({ erro: 'Produto não encontrado' }).code(404);
+        }
+
+        const produtoAtualizado = await Produto.findByPk(id);
+        return produtoAtualizado;
+    } catch (error) {
+        return h.response({ erro: 'Erro ao atualizar produto', detalhes: error.message }).code(500);
+    }
 };
 
-const removerProduto = (request, h) => {
-  const { id } = request.params;
-  const index = produtos.findIndex((p) => p.id === id);
+const removerProduto = async (request, h) => {
+    const { id } = request.params;
 
-  if (index === -1) {
-    return h.response({ erro: 'Produto não encontrado' }).code(404);
-  }
+    try {
+        const [rowsAtualizadas] = await Produto.update(
+            { status: 'inativo' },
+            { where: { id } }
+        );
 
-  produtos[index].status = 'inativo';
-  return { mensagem: 'Produto removido com sucesso' };
+        if (rowsAtualizadas === 0) {
+            return h.response({ erro: 'Produto não encontrado' }).code(404);
+        }
+
+        return { mensagem: 'Produto removido com sucesso' };
+    } catch (error) {
+        return h.response({ erro: 'Erro ao remover produto', detalhes: error.message }).code(500);
+    }
 };
 
-const obterProdutoPorId = (request, h) => {
-  const { id } = request.params;
-  const produto = produtos.find((p) => p.id === id);
+const obterProdutoPorId = async (request, h) => {
+    const { id } = request.params;
 
-  if (!produto) {
-    return h.response({ erro: 'Produto não encontrado' }).code(404);
-  }
+    try {
+        const produto = await Produto.findByPk(id);
 
-  return produto;
+        if (!produto) {
+            return h.response({ erro: 'Produto não encontrado' }).code(404);
+        }
+
+        return produto;
+    } catch (error) {
+        return h.response({ erro: 'Erro ao buscar produto', detalhes: error.message }).code(500);
+    }
 };
 
-const filtrarProdutos = (request, h) => {
-  const { categoria, nome } = request.query;
-  const filtrados = produtos.filter((p) =>
-    (categoria ? p.categoria === categoria : true) &&
-    (nome ? p.nome.includes(nome) : true)
-  );
+const filtrarProdutos = async (request, h) => {
+    const { categoria, nome } = request.query;
 
-  return filtrados;
+    try {
+        const where = {};
+        if (categoria) where.categoria = categoria;
+        if (nome) where.nome = { [Sequelize.Op.like]: `%${nome}%` };
+
+        const produtos = await Produto.findAll({ where });
+        return produtos;
+    } catch (error) {
+        return h.response({ erro: 'Erro ao filtrar produtos', detalhes: error.message }).code(500);
+    }
 };
 
 module.exports = {
