@@ -5,13 +5,13 @@ services:
     container_name: lab-web2024
     image: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-fatec}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fatec}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       PGDATA: /data/postgres
     volumes:
        - postgres:/data/postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     networks:
       - postgres
     restart: unless-stopped
